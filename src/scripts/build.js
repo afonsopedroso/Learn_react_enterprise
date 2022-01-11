@@ -3,16 +3,44 @@ const Path = require('path')
 const sass = require('node-sass')
 
 
-const result = sass.renderSync({
+const getComponents = () => {
+    let allComponents = []
+
+    const types = ['atoms', 'molecules', 'organisms']
+
+    types.forEach(type => {
+        const allFiles = Fs.readdirSync(`src/${type}`).map(file => ({
+            input :`src/${type}/${file}` ,
+            output: `src/lib/${file.slice(0,-4) +'css'}`
+        }))
+        allComponents = [
+            ...allComponents,
+            ...allFiles
+        ]
+    })
+    return allComponents
+}
+
+
+const compile = (path, fileName) => {
+    const result = sass.renderSync({
     data: Fs.readFileSync(
-        Path.resolve('src/global.scss')
+        Path.resolve(path)
     ).toString(),
     outputStyle: 'expanded',
     outFile: 'global.css',
     includePaths: [Path.resolve('src')]
 })
-
 Fs.writeFileSync(
-    Path.resolve('src/lib/global.css'),
+    Path.resolve(fileName),
     result.css.toString()
 )
+}
+
+compile('src/global.scss', 'src/lib/global.css')
+
+console.log(getComponents())
+
+getComponents().forEach(component =>  {
+    compile(component.input, component.output)
+})
